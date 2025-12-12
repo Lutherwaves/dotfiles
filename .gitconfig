@@ -1,0 +1,41 @@
+[user]
+	name = Martin Yankov    
+	email = martin@yankovs.com
+
+[core]
+pager = delta
+
+[alias]
+	graph = "!sh -c 'if git show-ref --quiet refs/heads/main; then base=main; else base=master; fi; git log --branches --pretty=oneline --graph --all --abbrev-commit --ancestry-path $base~2..HEAD'"
+	pulls = "!gh pr status"
+	wip = "commit --no-verify -m WIP"
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    features = side-by-side line-numbers decorations
+    whitespace-error-style = 22 reverse
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+    syntax-theme = OneHalfLight
+
+[diff]
+    tool = vimdiff
+
+[merge]
+    tool = vimdiff
+    conflictstyle = zdiff3
+
+[mergetool "vimdiff"]
+    cmd = nvim -d $LOCAL $BASE $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
+[spice "branchCreate"]
+	commit = false
