@@ -90,3 +90,28 @@ export PATH="$PATH:$HOME/go/bin"
 export GOPRIVATE=github.com/blox-eng/*
 export PATH="/usr/local/opt/postgresql@17/bin:$PATH"
 export PATH="/usr/local/opt/postgresql@17/bin:$PATH"
+
+# --- Claude Code Router (CCR) ---
+# 1) Always set ANTHROPIC_* env vars in this shell
+if command -v ccr >/dev/null 2>&1; then
+  eval "$(ccr activate)"
+fi
+
+# 2) Auto-start CCR when you run `claude`
+claude() {
+  if ! command -v ccr >/dev/null 2>&1; then
+    echo "ccr not found in PATH"
+    return 127
+  fi
+
+  # Start CCR only if it's not running
+  if ! ccr status >/dev/null 2>&1; then
+    ccr start >/dev/null 2>&1
+  fi
+
+  # Ensure current shell has the correct env (in case you opened a new terminal)
+  eval "$(ccr activate)"
+
+  command claude "$@"
+}
+
