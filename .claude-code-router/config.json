@@ -1,0 +1,30 @@
+{
+  "LOG": true,
+  "API_TIMEOUT_MS": 600000,
+  "Providers": [
+    {
+      "name": "openrouter",
+      "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
+      "api_key": "$OPENROUTER_API_KEY",
+      "models": [
+        "anthropic/claude-3.7-sonnet",
+        "deepseek/deepseek-r1",
+        "google/gemini-2.5-pro"
+      ],
+      "transformer": { "use": ["openrouter"] }
+    },
+    {
+      "name": "perplexity",
+      "api_base_url": "https://api.perplexity.ai/chat/completions",
+      "api_key": "$PPLX_API_KEY",
+      "models": ["sonar-pro", "sonar"],
+      "transformer": { "use": ["openrouter"] }
+    }
+  ],
+  "Router": {
+    "default": "openrouter,anthropic/claude-3.7-sonnet",
+    "think": "openrouter,deepseek/deepseek-r1",
+    "webSearch": "perplexity,sonar-pro"
+  }
+}
+
