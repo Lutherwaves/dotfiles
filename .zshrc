@@ -91,27 +91,72 @@ export GOPRIVATE=github.com/blox-eng/*
 export PATH="/usr/local/opt/postgresql@17/bin:$PATH"
 export PATH="/usr/local/opt/postgresql@17/bin:$PATH"
 
-# --- Claude Code Router (CCR) ---
-# 1) Always set ANTHROPIC_* env vars in this shell
-if command -v ccr >/dev/null 2>&1; then
-  eval "$(ccr activate)"
-fi
+# -------------------------------------------------------------------
+# Claude Code + Claude Code Router (CCR) dual-mode launcher for zsh
+#
+# Goal:
+#   - `claude`  = normal Claude Code (no router)
+#   - `clauder` = Claude Code routed through CCR (auto-starts CCR)
+#
+# IMPORTANT: remove your old auto-activation + old `claude()` wrapper.
+# In particular, do NOT keep `eval "$(ccr activate)"` at shell startup,
+# because it forces router mode globally. [page:0]
+# -------------------------------------------------------------------
 
-# 2) Auto-start CCR when you run `claude`
-claude() {
-  if ! command -v ccr >/dev/null 2>&1; then
-    echo "ccr not found in PATH"
-    return 127
-  fi
+# Resolve the real Claude Code binary path once, before we define functions.
+# This avoids recursion when we create a `claude()` function.
+typeset -g CLAUDE_BIN="${commands[claude]}"
 
-  # Start CCR only if it's not running
-  if ! ccr status >/dev/null 2>&1; then
-    ccr start >/dev/null 2>&1
-  fi
+# Helper: does ccr exist?
+_ccr_exists() { command -v ccr >/dev/null 2>&1 }
 
-  # Ensure current shell has the correct env (in case you opened a new terminal)
-  eval "$(ccr activate)"
-
-  command claude "$@"
+# Helper: start CCR if not running
+_ccr_start_if_needed() {
+  _ccr_exists || { echo "ccr not found in PATH"; return 127; }
+  ccr status >/dev/null 2>&1 || ccr start >/dev/null 2>&1
 }
 
+# -------------------------------------------------
+# 1) Normal Claude Code (no router)
+# -------------------------------------------------
+claude() {
+  # Ensure CCR env vars are not affecting this run.
+  unset ANTHROPIC_BASE_URL
+  unset ANTHROPIC_AUTH_TOKEN
+  unset ANTHROPIC_API_KEY
+  unset DISABLE_TELEMETRY
+  unset DISABLE_COST_WARNINGS
+  unset API_TIMEOUT_MS
+
+  # If you previously exported proxy vars globally and saw connection issues,
+  # you can uncomment these. (Leave them commented if you need proxy normally.)
+  # unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+  # export NO_PROXY="127.0.0.1,localhost"
+  # export no_proxy="127.0.0.1,localhost"
+
+  command "$CLAUDE_BIN" "$@"
+}
+
+# -------------------------------------------------
+# 2) Claude Code via CCR (router)
+# -------------------------------------------------
+clauder() {
+  _ccr_start_if_needed || return $?
+
+  # CCR's activate command outputs shell exports for:
+  # - ANTHROPIC_BASE_URL (default http://127.0.0.1:3456)
+  # - NO_PROXY=127.0.0.1 (to prevent proxy interference)
+  # - other router-related vars [page:0]
+  eval "$(ccr activate)"
+
+  # Extra safety: make sure localhost bypass is set (some envs need both forms).
+  export NO_PROXY="127.0.0.1,localhost"
+  export no_proxy="127.0.0.1,localhost"
+
+  command "$CLAUDE_BIN" "$@"
+}
+
+# Optional convenience commands
+alias ccrs='ccr status || ccr start'
+alias ccrstop='ccr stop'
+alias ccrrestart='ccr restart'
