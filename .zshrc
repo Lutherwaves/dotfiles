@@ -160,3 +160,219 @@ clauder() {
 alias ccrs='ccr status || ccr start'
 alias ccrstop='ccr stop'
 alias ccrrestart='ccr restart'
+
+# -------------------------------------------------------------------
+# AI Development Environment - Multi-Agent Support
+# -------------------------------------------------------------------
+
+# Universal AI Agent Launcher
+ai-agent() {
+  case "$1" in
+    "claude")
+      echo "🤖 Starting Claude Code..."
+      claude
+      ;;
+    "cursor")
+      echo "🔷 Starting Cursor via ACP..."
+      if command -v cursor-agent-acp >/dev/null 2>&1; then
+        cursor-agent-acp
+      else
+        echo "❌ Cursor ACP adapter not found. Install with: npm install -g @blowmage/cursor-agent-acp"
+        return 1
+      fi
+      ;;
+    "opencode")
+      echo "⚡ Starting OpenCode via ACP..."
+      if command -v opencode >/dev/null 2>&1; then
+        opencode acp
+      else
+        echo "❌ OpenCode not found. Install with: npm install -g opencode"
+        return 1
+      fi
+      ;;
+    "status")
+      echo "🔍 AI Agent Status:"
+      echo "  Claude Code: $(command -v claude >/dev/null 2>&1 && echo "✅ Installed" || echo "❌ Not found")"
+      echo "  Cursor CLI: $(command -v cursor-agent >/dev/null 2>&1 && echo "✅ Installed" || echo "❌ Not found")"
+      echo "  Cursor ACP: $(command -v cursor-agent-acp >/dev/null 2>&1 && echo "✅ Installed" || echo "❌ Not found")"
+      echo "  OpenCode: $(command -v opencode >/dev/null 2>&1 && echo "✅ Installed" || echo "❌ Not found")"
+      ;;
+    "help"|*)
+      echo "🤖 AI Agent Launcher"
+      echo "Usage: ai-agent [claude|cursor|opencode|status|help]"
+      echo ""
+      echo "  claude   - Launch Claude Code"
+      echo "  cursor   - Launch Cursor via ACP"
+      echo "  opencode - Launch OpenCode via ACP"
+      echo "  status   - Show installation status"
+      echo "  help     - Show this help"
+      ;;
+  esac
+}
+
+# Quick AI Agent Aliases
+alias ac='ai-agent claude'      # Claude Code
+alias ar='ai-agent cursor'      # Cursor via ACP
+alias ao='ai-agent opencode'    # OpenCode via ACP
+alias as='ai-agent status'      # Agent status
+
+# -------------------------------------------------------------------
+# Tmux Remote Development Setup
+# -------------------------------------------------------------------
+
+# Create AI development session
+dev-ai() {
+  local session_name="dev-ai"
+  local agent="${1:-claude}"
+  
+  echo "🚀 Starting AI development session..."
+  echo "   Session: $session_name"
+  echo "   Agent: $agent"
+  
+  # Check if session already exists
+  if tmux has-session -t "$session_name" 2>/dev/null; then
+    echo "📎 Attaching to existing session..."
+    tmux attach -t "$session_name"
+    return
+  fi
+  
+  # Create new session with AI agent
+  tmux new-session -d -s "$session_name" "ai-agent $agent"
+  
+  # Create additional panes for development
+  tmux split-window -h -t "$session_name:0"
+  tmux split-window -v -t "$session_name:0.1"
+  
+  # Select first pane and attach
+  tmux select-pane -t "$session_name:0.0"
+  tmux attach -t "$session_name"
+}
+
+# Create tmux development session (no AI)
+dev-tmux() {
+  local session_name="dev-tmux"
+  
+  echo "🚀 Starting tmux development session..."
+  
+  if tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux attach -t "$session_name"
+    return
+  fi
+  
+  # Create session with editor, terminal, and logs
+  tmux new-session -d -s "$session_name" -n editor "nvim"
+  tmux split-window -v -t "$session_name:0" 
+  tmux split-window -h -t "$session_name:0.1"
+  tmux select-pane -t "$session_name:0.0"
+  tmux attach -t "$session_name"
+}
+
+# Tmux session management aliases
+alias ta='tmux attach -t'      # Attach to session
+alias tn='tmux new -s'         # New session
+alias tl='tmux ls'             # List sessions
+alias tk='tmux kill-session -t' # Kill session
+
+# Quick session creation
+alias dev='dev-ai'            # AI development session
+alias tmux-dev='dev-tmux'      # Regular tmux session
+
+# -------------------------------------------------------------------
+# AI Environment Utilities
+# -------------------------------------------------------------------
+
+# Check all AI agent statuses
+check_agents() {
+  echo "🔍 AI Development Environment Status"
+  echo "=================================="
+  ai-agent status
+  echo ""
+  echo "🌐 Network Status:"
+  echo "  Tailscale: $(command -v tailscale >/dev/null 2>&1 && tailscale status >/dev/null 2>&1 && echo "✅ Connected" || echo "❌ Disconnected")"
+  echo ""
+  echo "📦 Tmux Sessions:"
+  tmux ls 2>/dev/null || echo "  No active sessions"
+}
+
+# Setup AI environment (run once)
+setup_ai_env() {
+  echo "🔧 Setting up AI development environment..."
+  
+  # Create necessary directories
+  mkdir -p ~/.config/claude-code
+  mkdir -p ~/.config/cursor
+  mkdir -p ~/.config/tmux
+  
+  # Install tmux plugins if not present
+  if [ ! -d ~/.tmux/plugins/tpm ]; then
+    echo "📦 Installing tmux plugin manager..."
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  fi
+  
+  echo "✅ AI environment setup complete!"
+  echo "💡 Run 'dev-ai' to start your first AI development session."
+}
+
+# Backup tmux sessions
+backup_sessions() {
+  local backup_dir="$HOME/.tmux-sessions-backup"
+  mkdir -p "$backup_dir"
+  
+  echo "💾 Backing up tmux sessions..."
+  
+  tmux list-sessions | while read -r session; do
+    session_name=$(echo "$session" | cut -d: -f1)
+    tmux capture-pane -t "$session_name" -S - > "$backup_dir/${session_name}_$(date +%Y%m%d_%H%M%S).log"
+  done
+  
+  echo "✅ Sessions backed up to $backup_dir"
+}
+
+# -------------------------------------------------------------------
+# Platform Detection and Configuration
+# -------------------------------------------------------------------
+
+# Detect platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  export AI_PLATFORM="macos"
+  export AI_CONFIG_HOME="$HOME/Library/Application Support"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  export AI_PLATFORM="linux"
+  export AI_CONFIG_HOME="$HOME/.config"
+fi
+
+# Platform-specific paths
+case "$AI_PLATFORM" in
+  "macos")
+    export AI_BIN_PATH="/usr/local/bin"
+    ;;
+  "linux")
+    export AI_BIN_PATH="/usr/local/bin"
+    ;;
+esac
+
+# -------------------------------------------------------------------
+# Environment Variables (configure as needed)
+# -------------------------------------------------------------------
+
+# AI API Keys (set these in your environment or .env file)
+# export ANTHROPIC_API_KEY="your-claude-api-key"
+# export CURSOR_API_KEY="your-cursor-api-key"  
+# export OPENCODE_API_KEY="your-opencode-api-key"
+
+# AI Development Settings
+export AI_SESSION_DIR="$HOME/.ai-sessions"
+export AI_LOG_LEVEL="info"
+export AI_DEBUG="${AI_DEBUG:-0}"
+
+# Create session directory
+mkdir -p "$AI_SESSION_DIR"
+
+# -------------------------------------------------------------------
+# Welcome Message
+# -------------------------------------------------------------------
+
+# Show AI environment status on shell startup (optional)
+if [ "$AI_SHOW_STATUS" = "1" ]; then
+  check_agents
+fi
