@@ -1,210 +1,197 @@
-# AI Development Environment Setup
+# Dotfiles
 
-This repository contains dotfiles for a portable AI development environment with support for multiple AI coding agents, tmux remote development, and cross-platform compatibility.
+Personal dotfiles and configuration files for an AI-powered development environment setup.
 
-## Features
+## Overview
 
-- **Multi-Agent Support**: Claude Code, Cursor CLI, OpenCode with easy switching
-- **Tmux Remote Development**: Persistent sessions for remote work via Tailscale
-- **Cross-Platform**: Works on macOS and Linux
-- **Agent Protocol Support**: ACP (Agent Client Protocol) compatible
+This repository contains configuration files for various tools and applications used in my development workflow, including shell configuration, terminal multiplexer, text editor, AI coding assistants, and other development tools. The setup is designed to work out of the box - simply clone and run the installation script.
 
-## Quick Setup
+## Installation
+
+### Quick Install
+
+The easiest way to set up this development environment:
 
 ```bash
-# Clone dotfiles
+# Clone the repository
 git clone https://github.com/Lutherwaves/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 
-# Run setup script
+# Run the installation script (handles everything automatically)
+./install.sh
+```
+
+The installation script will:
+- Clone the repository if not already present
+- Install system dependencies (tmux, node, git, etc.)
+- Set up AI coding agents (Claude Code, Cursor CLI, etc.)
+- Configure tmux with plugin manager
+- Set up shell configuration (.zshrc)
+- Create necessary directories and environment files
+- Verify the installation
+
+### Manual Installation
+
+If you prefer to set up manually:
+
+```bash
+# Clone the repository
+git clone https://github.com/Lutherwaves/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles
+
+# Run the setup script
 ./scripts/setup.sh
 
-# Reload shell
+# Reload your shell configuration
 source ~/.zshrc
 ```
 
-## AI Agents
+## What's Included
 
-### Claude Code
-```bash
-# Install
-npm install -g @anthropic-ai/claude-code
+### Shell Configuration
+- **`.zshrc`** - Zsh shell configuration with aliases, functions, AI agent helpers, and environment setup
 
-# Authenticate
-claude login
+### Terminal & Multiplexer
+- **`.config/tmux/`** - Tmux configuration files for session management and layouts (including AI development layouts)
+- **`.config/kitty/`** - Kitty terminal emulator configuration
 
-# Use
-claude                    # Direct Claude Code
-clauder                   # Claude Code via CCR (router)
-```
+### Text Editor
+- **`.config/nvim/`** - Neovim configuration with LazyVim setup
 
-### Cursor CLI + ACP
-```bash
-# Install Cursor CLI
-curl https://cursor.com/install -fsSL | bash
+### AI Development Tools
+- **`.cursor/`** - Cursor IDE configuration, rules, and MCP setup
+- **`.claude/`** - Claude AI coding assistant configuration and rules
 
-# Authenticate
-cursor-agent login
+### Development Tools
+- **`.gitconfig`** - Git configuration and aliases
 
-# Install ACP adapter
-npm install -g @blowmage/cursor-agent-acp-npm
-
-# Use
-ai-agent cursor           # Cursor via ACP
-```
-
-### OpenCode
-```bash
-# Install
-npm install -g opencode
-
-# Use
-ai-agent opencode         # OpenCode via ACP
-```
-
-### Agent Switching
-```bash
-# Universal agent launcher
-ai-agent claude           # Switch to Claude
-ai-agent cursor           # Switch to Cursor
-ai-agent opencode         # Switch to OpenCode
-
-# Quick aliases
-ac                         # Claude Code
-ar                         # Cursor via ACP
-ao                         # OpenCode via ACP
-```
-
-## Tmux Remote Development
-
-### Session Management
-```bash
-# Create development session
-tmux new -s dev-ai
-
-# Create with AI agent
-tmux new -s dev-ai 'ai-agent claude'
-
-# List sessions
-tmux ls
-
-# Attach to session
-tmux attach -t dev-ai
-
-# Detach (keep running)
-Ctrl+b d
-
-# Kill session
-tmux kill-session -t dev-ai
-```
-
-### Remote Access via Tailscale
-```bash
-# From client machine
-ssh user@machine-ip -t "tmux attach -t dev-ai"
-
-# Or create dedicated remote session
-tmux new -s remote-dev 'ai-agent cursor'
-```
-
-### Essential Tmux Shortcuts
-- `Ctrl+b c` - Create new window
-- `Ctrl+b %` - Split vertical
-- `Ctrl+b "` - Split horizontal
-- `Ctrl+b ←/→/↑/↓` - Navigate panes
-- `Ctrl+b d` - Detach session
-- `Ctrl+b 0-9` - Switch windows
-
-## Configuration Files
-
-### AI Agent Configs
-- `~/.config/claude-code/` - Claude Code settings
-- `~/.config/cursor/` - Cursor CLI settings
-- `~/.config/tmux/tmux.conf` - Tmux configuration
-
-### Environment Variables
-```bash
-# Add to ~/.zshrc or .env
-export ANTHROPIC_API_KEY="your-claude-api-key"
-export CURSOR_API_KEY="your-cursor-api-key"
-export OPENCODE_API_KEY="your-opencode-api-key"
-```
-
-## Platform-Specific Notes
-
-### macOS
-- Uses Homebrew paths for tools
-- Includes Secretive SSH integration
-- Android SDK support for mobile development
-
-### Linux (Ubuntu)
-- Uses apt paths for tools
-- Includes systemd service configurations
-- Docker and Podman support
-
-## Aliases and Functions
-
-### AI Agent Aliases
-```bash
-ac          # Claude Code
-ar          # Cursor via ACP
-ao          # OpenCode via ACP
-ai-agent    # Universal agent launcher
-```
-
-### Development Aliases
-```bash
-dev-ai      # Start AI development session
-dev-tmux    # Start tmux development session
-ai-status   # Check all AI agent statuses
-```
-
-### Utility Functions
-```bash
-check_agents()     # Status of all AI agents
-setup_ai_env()     # Initialize AI environment
-backup_sessions()  # Backup tmux sessions
-```
-
-## Troubleshooting
-
-### Common Issues
-1. **Agent not found**: Run `npm install -g` for the missing agent
-2. **Authentication expired**: Re-run `agent login`
-3. **Tmux session lost**: Check `tmux ls` and reattach
-4. **Remote connection**: Verify Tailscale VPN status
-
-### Debug Mode
-```bash
-# Enable debug logging
-export AI_DEBUG=1
-ai-agent claude --debug
-```
+### Scripts
+- **`install.sh`** - Main one-line installation script (recommended)
+- **`scripts/setup.sh`** - Complete setup script for AI development environment
+- **`scripts/backup.sh`** - Configuration backup utility
+- **`scripts/install_agents.sh`** - AI agent installation helper
+- **`scripts/setup_mcp.sh`** - MCP server setup
 
 ## Repository Structure
 
 ```
 .
-├── .zshrc                    # Main shell configuration
+├── .zshrc                 # Main shell configuration
+├── .gitconfig             # Git configuration
 ├── .config/
-│   ├── tmux/
-│   │   └── tmux.conf        # Tmux configuration
-│   ├── claude-code/         # Claude Code settings
-│   └── cursor/              # Cursor settings
-├── scripts/
-│   ├── setup.sh             # Main setup script
-│   ├── install_agents.sh    # AI agent installation
-│   └── backup.sh            # Configuration backup
-└── README.md                # This file
+│   ├── nvim/             # Neovim configuration
+│   ├── tmux/             # Tmux configuration
+│   └── kitty/            # Kitty terminal configuration
+├── .cursor/              # Cursor IDE configuration
+├── .claude/              # Claude AI configuration
+├── scripts/              # Setup and utility scripts
+├── install.sh            # Main installation script
+└── README.md             # This file
+```
+
+## Post-Installation Setup
+
+After running the installation script, you'll need to:
+
+1. **Reload your shell configuration:**
+   ```bash
+   source ~/.zshrc
+   ```
+
+2. **Configure API keys** (if using AI agents):
+   Edit `~/.ai-env` and add your API keys:
+   ```bash
+   export ANTHROPIC_API_KEY="your-claude-api-key"
+   export CURSOR_API_KEY="your-cursor-api-key"
+   ```
+
+3. **Authenticate with AI agents:**
+   ```bash
+   claude login
+   cursor-agent login
+   ```
+
+4. **Start your first AI session:**
+   ```bash
+   dev-ai claude
+   ```
+
+## Customization
+
+These dotfiles are tailored to my personal preferences and workflow. Feel free to fork this repository and customize it to your needs.
+
+### Key Customization Points
+
+1. **Shell Aliases** - Modify `.zshrc` to add or change aliases and functions
+2. **Editor Settings** - Adjust Neovim configuration in `.config/nvim/`
+3. **Terminal Setup** - Customize tmux layouts and kitty configurations
+4. **Git Configuration** - Update `.gitconfig` with your details
+5. **AI Agent Rules** - Customize Cursor and Claude rules in `.cursor/` and `.claude/`
+
+## Requirements
+
+- **Zsh shell** (default on macOS, install with `sudo apt install zsh` on Linux)
+- **Git** (for cloning and version control)
+- **Node.js and npm** (for AI agent installation)
+- **Neovim** (for editor configuration - will be installed if missing)
+- **Tmux** (for terminal multiplexer - will be installed if missing)
+- **Kitty** (optional, for terminal emulator configuration)
+
+The installation script will automatically install missing dependencies on Linux (apt) and macOS (Homebrew).
+
+## Usage
+
+After installation, the following commands are available:
+
+- `dev-ai <agent>` - Start an AI coding session (e.g., `dev-ai claude`)
+- `ai-agent help` - Get help with AI agent commands
+- Various shell aliases and functions defined in `.zshrc`
+
+For tmux layouts:
+- `tmux new-session -s ai -f ~/.config/tmux/ai-layout.conf` - Start AI development layout
+- `tmux new-session -s dev -f ~/.config/tmux/dev-layout.conf` - Start development layout
+
+## Backup
+
+To backup your current configurations before installing:
+
+```bash
+./scripts/backup.sh
+```
+
+## Maintenance
+
+To update your dotfiles:
+
+```bash
+cd ~/.dotfiles
+git pull
+./scripts/setup.sh
+```
+
+Or if you used the default installation location:
+
+```bash
+cd ~/.dotfiles && git pull && ./scripts/setup.sh
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch
-3. Test on both macOS and Linux
-4. Submit pull request
+While these are personal dotfiles, suggestions and improvements are welcome. Please feel free to open an issue or submit a pull request on [GitHub](https://github.com/Lutherwaves/dotfiles).
 
 ## License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Repository
+
+- **GitHub:** https://github.com/Lutherwaves/dotfiles
+- **Issues:** https://github.com/Lutherwaves/dotfiles/issues
+- **Pull Requests:** https://github.com/Lutherwaves/dotfiles/pulls
+
+## Acknowledgments
+
+- Inspired by various dotfiles repositories in the community
+- Neovim configuration based on [LazyVim](https://github.com/LazyVim/LazyVim)
+- Tmux plugin manager from [tmux-plugins/tpm](https://github.com/tmux-plugins/tpm)
+- Thanks to all the open-source tool maintainers
