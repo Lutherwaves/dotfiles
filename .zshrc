@@ -5,6 +5,15 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Load DOTFILES_DIR from environment file if it exists
+# This should be loaded early so it's available throughout the config
+if [ -f "$HOME/.dotfiles-env" ]; then
+    source "$HOME/.dotfiles-env"
+fi
+
+# Set DOTFILES_DIR default if not set
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+
 # Android SDK for IONIC 4
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 
@@ -24,7 +33,10 @@ export PATH=$PATH:$ANDROID_SDK_ROOT/emulator
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
-[ -s "/Users/martinyankov/.jabba/jabba.sh" ] && source "/Users/martinyankov/.jabba/jabba.sh"
+# Jabba (Java Version Manager) - optional, only if installed
+if [ -s "$HOME/.jabba/jabba.sh" ]; then
+    source "$HOME/.jabba/jabba.sh"
+fi
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 
@@ -276,6 +288,16 @@ alias tk='tmux kill-session -t' # Kill session
 # Quick session creation
 alias dev='dev-ai'            # AI development session
 alias tmux-dev='dev-tmux'      # Regular tmux session
+
+# Tmux navigation helpers (Kitty-friendly) - only if script exists
+if [ -f "$DOTFILES_DIR/scripts/tmux-nav.sh" ]; then
+    alias tn="$DOTFILES_DIR/scripts/tmux-nav.sh next"
+    alias tp="$DOTFILES_DIR/scripts/tmux-nav.sh prev"
+    alias t1="$DOTFILES_DIR/scripts/tmux-nav.sh 1"
+    alias t2="$DOTFILES_DIR/scripts/tmux-nav.sh 2"
+    alias t3="$DOTFILES_DIR/scripts/tmux-nav.sh 3"
+    alias tl="$DOTFILES_DIR/scripts/tmux-nav.sh list"
+fi
 
 # -------------------------------------------------------------------
 # AI Environment Utilities

@@ -1,6 +1,11 @@
 #!/bin/bash
 
-DOTFILES_DIR="$HOME/dotfiles" # Adjust to your dotfiles location
+# Get DOTFILES_DIR from environment or use default
+if [ -f "$HOME/.dotfiles-env" ]; then
+    source "$HOME/.dotfiles-env"
+fi
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+
 CLAUDE_CONFIG="$HOME/.claude.json"
 DOTFILES_CLAUDE_CONFIG="$DOTFILES_DIR/claude/.claude.json"
 

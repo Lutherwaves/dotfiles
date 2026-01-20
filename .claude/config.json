@@ -1,0 +1,55 @@
+{
+  "name": "Development Environment",
+  "description": "Claude configuration for modern TypeScript/React development",
+  "context": {
+    "project_type": "monorepo",
+    "framework": "React 18 + TypeScript + Vite",
+    "package_manager": "pnpm",
+    "styling": "Tailwind CSS + shadcn/ui",
+    "state_management": "TanStack Query",
+    "routing": "TanStack Router or Next.js",
+    "forms": "React Hook Form + Zod",
+    "auth": "JWT with refresh tokens",
+    "api_client": "Generated from OpenAPI (if applicable)"
+  },
+  "rules": [
+    "global-coding-contract.md",
+    "react-component-architecture.md",
+    "styling-shadcn.md",
+    "state-data-performance.md",
+    "security-owasp-top10.md",
+    "ux-ui-heuristics.md",
+    "ux-api-heuristics.md",
+    "ux-library-heuristics.md"
+  ],
+  "key_patterns": {
+    "monorepo_structure": {
+      "apps": "Applications",
+      "packages": "Shared packages"
+    },
+    "layout_system": {
+      "type": "Progressive disclosure",
+      "panels": [
+        "Navigation sidebar",
+        "Primary content",
+        "Entity details/Chat"
+      ]
+    },
+    "code_standards": {
+      "typescript_only": true,
+      "arrow_functions": true,
+      "semantic_html": true,
+      "accessibility": true,
+      "no_any_types": true
+    }
+  },
+  "commands": {
+    "development": {
+      "install": "pnpm install",
+      "dev": "pnpm dev",
+      "build": "pnpm build",
+      "test": "pnpm test",
+      "lint": "pnpm lint"
+    }
+  }
+}

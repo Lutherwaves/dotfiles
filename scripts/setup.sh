@@ -6,6 +6,9 @@
 
 set -e
 
+# Get DOTFILES_DIR from environment or use default
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -121,11 +124,15 @@ setup_tmux() {
     fi
     
     # Copy tmux configuration
-    if [ -f ~/.dotfiles/.config/tmux/tmux.conf ]; then
+    if [ -f "$DOTFILES_DIR/.config/tmux/tmux.conf" ]; then
         mkdir -p ~/.config/tmux
-        cp ~/.dotfiles/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf
-        cp ~/.dotfiles/.config/tmux/ai-layout.conf ~/.config/tmux/ai-layout.conf
-        cp ~/.dotfiles/.config/tmux/dev-layout.conf ~/.config/tmux/dev-layout.conf
+        cp "$DOTFILES_DIR/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
+        if [ -f "$DOTFILES_DIR/.config/tmux/ai-layout.conf" ]; then
+            cp "$DOTFILES_DIR/.config/tmux/ai-layout.conf" ~/.config/tmux/ai-layout.conf
+        fi
+        if [ -f "$DOTFILES_DIR/.config/tmux/dev-layout.conf" ]; then
+            cp "$DOTFILES_DIR/.config/tmux/dev-layout.conf" ~/.config/tmux/dev-layout.conf
+        fi
         print_success "Tmux configuration copied"
     fi
 }
@@ -141,8 +148,17 @@ setup_shell() {
     fi
     
     # Copy new .zshrc
-    cp ~/.dotfiles/.zshrc ~/.zshrc
+    cp "$DOTFILES_DIR/.zshrc" ~/.zshrc
     print_success "Shell configuration updated"
+    
+    # Ensure DOTFILES_DIR is set in .zshrc environment
+    if [ -f "$HOME/.dotfiles-env" ]; then
+        source "$HOME/.dotfiles-env"
+    else
+        # Create .dotfiles-env if it doesn't exist
+        echo "export DOTFILES_DIR=\"$DOTFILES_DIR\"" > "$HOME/.dotfiles-env"
+        print_success "Created $HOME/.dotfiles-env"
+    fi
 }
 
 # Create AI environment directories

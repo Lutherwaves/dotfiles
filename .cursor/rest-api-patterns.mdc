@@ -1,0 +1,11 @@
+---
+description: Guidelines for using REST API with TanStack Query
+globs: src/**/*.tsx
+---
+- Use generated API client functions when available
+- Use TanStack Query (useQuery, useMutation) for all API calls
+- Use consistent query key patterns
+- Handle loading and error states from TanStack Query
+- Use queryClient.invalidateQueries after mutations to sync state
+- Use optimistic updates for better UX when appropriate
+- Follow REST API error handling patterns

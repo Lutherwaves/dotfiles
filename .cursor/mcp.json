@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
+    },
+    "playwright": {
+      "command": "mcp-server-playwright",
+      "args": ["--headless"]
+    }
+  }
+}
