@@ -1,197 +1,132 @@
 # Dotfiles
 
-Personal dotfiles and configuration files for an AI-powered development environment setup.
+Personal dotfiles for an AI-powered dev environment. macOS (Intel + Apple Silicon) and Linux.
 
-## Overview
+## Install
 
-This repository contains configuration files for various tools and applications used in my development workflow, including shell configuration, terminal multiplexer, text editor, AI coding assistants, and other development tools. The setup is designed to work out of the box - simply clone and run the installation script.
-
-## Installation
-
-### Quick Install
-
-The easiest way to set up this development environment:
+Fresh machine, one command:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Lutherwaves/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
-
-# Run the installation script (handles everything automatically)
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/Lutherwaves/dotfiles/main/install.sh | bash
 ```
 
-The installation script will:
-- Clone the repository if not already present
-- Install system dependencies (tmux, node, git, etc.)
-- Set up AI coding agents (Claude Code, Cursor CLI, etc.)
-- Configure tmux with plugin manager
-- Set up shell configuration (.zshrc)
-- Create necessary directories and environment files
-- Verify the installation
-
-### Manual Installation
-
-If you prefer to set up manually:
+Or clone first:
 
 ```bash
-# Clone the repository
 git clone https://github.com/Lutherwaves/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
+~/.dotfiles/install.sh
+```
 
-# Run the setup script
-./scripts/setup.sh
+The setup script is idempotent — safe to re-run anytime.
 
-# Reload your shell configuration
+## What it does
+
+The setup script will:
+
+1. Install system dependencies via Homebrew (or apt on Linux)
+2. Symlink all configs to your home directory
+3. Install zsh plugins, TPM, zsh-z, nvm
+4. Optionally install Claude Code
+5. Create `~/.zshrc.local` for your machine-specific config (API keys, etc.)
+
+Uses [charmbracelet/gum](https://github.com/charmbracelet/gum) for pretty output when available (installed automatically).
+
+## What's included
+
+| Config | Location in repo | Symlinked to |
+|--------|-----------------|--------------|
+| Zsh shell config | `.zshrc` | `~/.zshrc` |
+| Git config | `.gitconfig` | `~/.gitconfig` |
+| Kitty terminal | `.config/kitty/` | `~/.config/kitty` |
+| Tmux | `.config/tmux/` | `~/.config/tmux` |
+| Neovim (LazyVim) | `.config/nvim/nvim/` | `~/.config/nvim` |
+| Claude rules | `.claude/*.md` | `~/.claude/*.md` |
+| Cursor rules | `.cursor/*.mdc` | `~/.cursor/*.mdc` |
+
+### System packages installed
+
+tmux, neovim, node, git, fd, lazygit, ripgrep, pyenv, pyenv-virtualenv, nvm, gum, zsh-autosuggestions, zsh-syntax-highlighting, powerlevel10k
+
+## After install
+
+```bash
 source ~/.zshrc
 ```
 
-## What's Included
+Edit `~/.zshrc.local` with your API keys and machine-specific paths:
 
-### Shell Configuration
-- **`.zshrc`** - Zsh shell configuration with aliases, functions, AI agent helpers, and environment setup
+```bash
+export ANTHROPIC_API_KEY="..."
+export PERPLEXITY_API_KEY="..."
+```
 
-### Terminal & Multiplexer
-- **`.config/tmux/`** - Tmux configuration files for session management and layouts (including AI development layouts)
-- **`.config/kitty/`** - Kitty terminal emulator configuration
+Open `nvim` — LazyVim plugins and LSPs install automatically on first launch.
 
-### Text Editor
-- **`.config/nvim/`** - Neovim configuration with LazyVim setup
+In tmux, press `Ctrl+Space` then `I` to install TPM plugins.
 
-### AI Development Tools
-- **`.cursor/`** - Cursor IDE configuration, rules, and MCP setup
-- **`.claude/`** - Claude AI coding assistant configuration and rules
+## Local LLM (Ollama)
 
-### Development Tools
-- **`.gitconfig`** - Git configuration and aliases
+The setup optionally installs [Ollama](https://ollama.com) for local inference. Since Ollama v0.14+, it natively supports the Anthropic Messages API — no proxy needed.
 
-### Scripts
-- **`install.sh`** - Main one-line installation script (recommended)
-- **`scripts/setup.sh`** - Complete setup script for AI development environment
-- **`scripts/backup.sh`** - Configuration backup utility
-- **`scripts/install_agents.sh`** - AI agent installation helper
-- **`scripts/setup_mcp.sh`** - MCP server setup
+```bash
+# Use Claude Code with a local model
+claudeo                        # uses qwen2.5:32b by default
+claudeo deepseek-r1:32b       # specify a different model
+co                             # alias for claudeo
+```
 
-## Repository Structure
+Set default model in `~/.zshrc.local`:
+
+```bash
+export OLLAMA_MODEL="deepseek-r1:32b"
+```
+
+Three ways to run Claude Code:
+- `claude` — direct Anthropic API
+- `clauder` — via Claude Code Router (OpenRouter, Perplexity, etc.)
+- `claudeo` — via local Ollama
+
+## Shell aliases
+
+| Alias | What it does |
+|-------|-------------|
+| `dev` / `dev-ai` | Start a tmux session with an AI agent |
+| `tmux-dev` | Start a tmux dev session (no AI) |
+| `claude` | Run Claude Code (direct API) |
+| `clauder` | Run Claude Code through CCR router |
+| `claudeo` / `co` | Run Claude Code with local Ollama |
+| `ac` | Shortcut for `ai-agent claude` |
+| `ta` / `tn` / `tl` / `tk` | tmux attach / new / list / kill |
+| `vim` | Opens neovim |
+
+## Updating
+
+```bash
+cd ~/.dotfiles && git pull
+```
+
+Since configs are symlinked, pulling is enough — no need to re-run setup unless new dependencies were added.
+
+## Repo structure
 
 ```
 .
-├── .zshrc                 # Main shell configuration
-├── .gitconfig             # Git configuration
+├── install.sh              # Entry point (curl-friendly, clones + runs setup)
+├── scripts/
+│   ├── setup.sh            # Main setup (deps, symlinks, plugins)
+│   └── backup.sh           # Backup existing configs
+├── .zshrc                  # Shell config (portable, uses $HOMEBREW_PREFIX)
+├── .zshrc.local.example    # Template for machine-specific overrides
+├── .gitconfig               # Git config
 ├── .config/
-│   ├── nvim/             # Neovim configuration
-│   ├── tmux/             # Tmux configuration
-│   └── kitty/            # Kitty terminal configuration
-├── .cursor/              # Cursor IDE configuration
-├── .claude/              # Claude AI configuration
-├── scripts/              # Setup and utility scripts
-├── install.sh            # Main installation script
-└── README.md             # This file
+│   ├── kitty/              # Kitty terminal config
+│   ├── tmux/               # Tmux config + layouts
+│   └── nvim/nvim/          # Neovim LazyVim config
+├── .claude/                # Claude AI rules and config
+├── .cursor/                # Cursor IDE rules and MCP config
+└── .claude-code-router/    # Claude Code Router config
 ```
-
-## Post-Installation Setup
-
-After running the installation script, you'll need to:
-
-1. **Reload your shell configuration:**
-   ```bash
-   source ~/.zshrc
-   ```
-
-2. **Configure API keys** (if using AI agents):
-   Edit `~/.ai-env` and add your API keys:
-   ```bash
-   export ANTHROPIC_API_KEY="your-claude-api-key"
-   export CURSOR_API_KEY="your-cursor-api-key"
-   ```
-
-3. **Authenticate with AI agents:**
-   ```bash
-   claude login
-   cursor-agent login
-   ```
-
-4. **Start your first AI session:**
-   ```bash
-   dev-ai claude
-   ```
-
-## Customization
-
-These dotfiles are tailored to my personal preferences and workflow. Feel free to fork this repository and customize it to your needs.
-
-### Key Customization Points
-
-1. **Shell Aliases** - Modify `.zshrc` to add or change aliases and functions
-2. **Editor Settings** - Adjust Neovim configuration in `.config/nvim/`
-3. **Terminal Setup** - Customize tmux layouts and kitty configurations
-4. **Git Configuration** - Update `.gitconfig` with your details
-5. **AI Agent Rules** - Customize Cursor and Claude rules in `.cursor/` and `.claude/`
-
-## Requirements
-
-- **Zsh shell** (default on macOS, install with `sudo apt install zsh` on Linux)
-- **Git** (for cloning and version control)
-- **Node.js and npm** (for AI agent installation)
-- **Neovim** (for editor configuration - will be installed if missing)
-- **Tmux** (for terminal multiplexer - will be installed if missing)
-- **Kitty** (optional, for terminal emulator configuration)
-
-The installation script will automatically install missing dependencies on Linux (apt) and macOS (Homebrew).
-
-## Usage
-
-After installation, the following commands are available:
-
-- `dev-ai <agent>` - Start an AI coding session (e.g., `dev-ai claude`)
-- `ai-agent help` - Get help with AI agent commands
-- Various shell aliases and functions defined in `.zshrc`
-
-For tmux layouts:
-- `tmux new-session -s ai -f ~/.config/tmux/ai-layout.conf` - Start AI development layout
-- `tmux new-session -s dev -f ~/.config/tmux/dev-layout.conf` - Start development layout
-
-## Backup
-
-To backup your current configurations before installing:
-
-```bash
-./scripts/backup.sh
-```
-
-## Maintenance
-
-To update your dotfiles:
-
-```bash
-cd ~/.dotfiles
-git pull
-./scripts/setup.sh
-```
-
-Or if you used the default installation location:
-
-```bash
-cd ~/.dotfiles && git pull && ./scripts/setup.sh
-```
-
-## Contributing
-
-While these are personal dotfiles, suggestions and improvements are welcome. Please feel free to open an issue or submit a pull request on [GitHub](https://github.com/Lutherwaves/dotfiles).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Repository
-
-- **GitHub:** https://github.com/Lutherwaves/dotfiles
-- **Issues:** https://github.com/Lutherwaves/dotfiles/issues
-- **Pull Requests:** https://github.com/Lutherwaves/dotfiles/pulls
-
-## Acknowledgments
-
-- Inspired by various dotfiles repositories in the community
-- Neovim configuration based on [LazyVim](https://github.com/LazyVim/LazyVim)
-- Tmux plugin manager from [tmux-plugins/tpm](https://github.com/tmux-plugins/tpm)
-- Thanks to all the open-source tool maintainers
+MIT — see [LICENSE.md](LICENSE.md).

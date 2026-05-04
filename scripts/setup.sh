@@ -1,268 +1,338 @@
 #!/bin/bash
 
-# AI Development Environment Setup Script
-# Platform: Linux/macOS
-# Purpose: One-click setup for AI coding environment
+# Dotfiles Setup Script
+# Works on macOS (Intel + Apple Silicon) and Linux
+# Safe to re-run — idempotent, uses symlinks
+# Uses charmbracelet/gum for pretty output when available
 
-set -e
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 
-# Get DOTFILES_DIR from environment or use default
-export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+# -------------------------------------------------------------------
+# Output helpers (gum with fallback)
+# -------------------------------------------------------------------
+HAS_GUM=false
+command -v gum &>/dev/null && HAS_GUM=true
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Helper functions
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Detect platform
-detect_platform() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        PLATFORM="macos"
-        PKG_MANAGER="brew"
-        print_status "Detected platform: macOS"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        PLATFORM="linux"
-        PKG_MANAGER="apt"
-        print_status "Detected platform: Linux"
+header() {
+    if $HAS_GUM; then
+        gum style \
+            --foreground 212 --border-foreground 212 --border double \
+            --align center --width 50 --padding "1 2" --margin "1 0" \
+            "$@"
     else
-        print_error "Unsupported platform: $OSTYPE"
-        exit 1
+        echo ""
+        echo "========================================="
+        echo "  $*"
+        echo "========================================="
+        echo ""
     fi
 }
 
-# Check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Install system dependencies
-install_system_deps() {
-    print_status "Installing system dependencies..."
-    
-    case "$PLATFORM" in
-        "macos")
-            if ! command_exists brew; then
-                print_status "Installing Homebrew..."
-                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            fi
-            brew install tmux node git
-            ;;
-        "linux")
-            sudo apt update
-            sudo apt install -y tmux nodejs npm git curl
-            ;;
-    esac
-}
-
-# Install AI agents
-install_ai_agents() {
-    print_status "Installing AI coding agents..."
-    
-    # Claude Code
-    if ! command_exists claude; then
-        print_status "Installing Claude Code..."
-        npm install -g @anthropic-ai/claude-code
+section() {
+    if $HAS_GUM; then
+        echo ""
+        gum style --bold --foreground 212 "  $1"
     else
-        print_success "Claude Code already installed"
-    fi
-    
-    # Cursor CLI
-    if ! command_exists cursor-agent; then
-        print_status "Installing Cursor CLI..."
-        curl https://cursor.com/install -fsSL | bash
-    else
-        print_success "Cursor CLI already installed"
-    fi
-    
-    # Cursor ACP Adapter
-    if ! command_exists cursor-agent-acp; then
-        print_status "Installing Cursor ACP adapter..."
-        npm install -g @blowmage/cursor-agent-acp-npm
-    else
-        print_success "Cursor ACP adapter already installed"
-    fi
-    
-    # OpenCode
-    if ! command_exists opencode; then
-        print_status "Installing OpenCode..."
-        npm install -g opencode
-    else
-        print_success "OpenCode already installed"
+        echo ""
+        echo "--- $1 ---"
     fi
 }
 
-# Setup tmux
-setup_tmux() {
-    print_status "Setting up tmux..."
-    
-    # Create tmux config directory
-    mkdir -p ~/.tmux/plugins
-    
-    # Install tmux plugin manager
-    if [ ! -d ~/.tmux/plugins/tpm ]; then
-        print_status "Installing tmux plugin manager..."
-        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-    fi
-    
-    # Copy tmux configuration
-    if [ -f "$DOTFILES_DIR/.config/tmux/tmux.conf" ]; then
-        mkdir -p ~/.config/tmux
-        cp "$DOTFILES_DIR/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
-        if [ -f "$DOTFILES_DIR/.config/tmux/ai-layout.conf" ]; then
-            cp "$DOTFILES_DIR/.config/tmux/ai-layout.conf" ~/.config/tmux/ai-layout.conf
-        fi
-        if [ -f "$DOTFILES_DIR/.config/tmux/dev-layout.conf" ]; then
-            cp "$DOTFILES_DIR/.config/tmux/dev-layout.conf" ~/.config/tmux/dev-layout.conf
-        fi
-        print_success "Tmux configuration copied"
-    fi
-}
-
-# Setup shell configuration
-setup_shell() {
-    print_status "Setting up shell configuration..."
-    
-    # Backup existing .zshrc
-    if [ -f ~/.zshrc ]; then
-        cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d_%H%M%S)
-        print_warning "Existing .zshrc backed up"
-    fi
-    
-    # Copy new .zshrc
-    cp "$DOTFILES_DIR/.zshrc" ~/.zshrc
-    print_success "Shell configuration updated"
-    
-    # Ensure DOTFILES_DIR is set in .zshrc environment
-    if [ -f "$HOME/.dotfiles-env" ]; then
-        source "$HOME/.dotfiles-env"
+ok() {
+    if $HAS_GUM; then
+        gum log --level info "$1"
     else
-        # Create .dotfiles-env if it doesn't exist
-        echo "export DOTFILES_DIR=\"$DOTFILES_DIR\"" > "$HOME/.dotfiles-env"
-        print_success "Created $HOME/.dotfiles-env"
+        echo -e "\033[0;32m[ok]\033[0m $1"
     fi
 }
 
-# Create AI environment directories
-create_directories() {
-    print_status "Creating AI environment directories..."
-    
-    mkdir -p ~/.config/claude-code
-    mkdir -p ~/.config/cursor
-    mkdir -p ~/.config/tmux
-    mkdir -p ~/.ai-sessions
-    
-    print_success "Directories created"
-}
-
-# Setup environment file
-setup_env() {
-    print_status "Setting up environment configuration..."
-    
-    local env_file="$HOME/.ai-env"
-    
-    cat > "$env_file" << EOF
-# AI Development Environment Variables
-# Configure these with your actual API keys
-
-# Claude Code
-# export ANTHROPIC_API_KEY="your-claude-api-key"
-
-# Cursor
-# export CURSOR_API_KEY="your-cursor-api-key"
-
-# OpenCode
-# export OPENCODE_API_KEY="your-opencode-api-key"
-
-# Development Settings
-export AI_SESSION_DIR="$HOME/.ai-sessions"
-export AI_LOG_LEVEL="info"
-export AI_DEBUG="0"
-
-# Show status on shell startup (set to 1 to enable)
-export AI_SHOW_STATUS="0"
-EOF
-    
-    print_success "Environment file created: $env_file"
-    print_warning "Edit $env_file with your API keys"
-}
-
-# Verify installation
-verify_installation() {
-    print_status "Verifying installation..."
-    
-    local errors=0
-    
-    # Check commands
-    for cmd in tmux node npm git; do
-        if command_exists "$cmd"; then
-            print_success "$cmd: ✅"
-        else
-            print_error "$cmd: ❌"
-            ((errors++))
-        fi
-    done
-    
-    # Check AI agents
-    for cmd in claude cursor-agent cursor-agent-acp opencode; do
-        if command_exists "$cmd"; then
-            print_success "$cmd: ✅"
-        else
-            print_warning "$cmd: ❌ (may require manual installation)"
-        fi
-    done
-    
-    if [ $errors -eq 0 ]; then
-        print_success "Installation verified successfully!"
+warn() {
+    if $HAS_GUM; then
+        gum log --level warn "$1"
     else
-        print_error "Installation has $errors errors"
+        echo -e "\033[1;33m[!!]\033[0m $1"
+    fi
+}
+
+fail() {
+    if $HAS_GUM; then
+        gum log --level error "$1"
+    else
+        echo -e "\033[0;31m[FAIL]\033[0m $1"
+    fi
+}
+
+spin() {
+    local title="$1"
+    shift
+    if $HAS_GUM; then
+        gum spin --spinner dot --title "$title" -- "$@"
+    else
+        echo -n "  $title... "
+        "$@" &>/dev/null
+        echo "done"
+    fi
+}
+
+confirm() {
+    if $HAS_GUM; then
+        gum confirm --default=yes "$1"
+    else
+        echo -n "$1 [Y/n] "
+        read -r answer
+        [[ -z "$answer" || "$answer" =~ ^[Yy] ]]
+    fi
+}
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+# -------------------------------------------------------------------
+# Detect Homebrew prefix
+# -------------------------------------------------------------------
+detect_brew() {
+    if [ -d /opt/homebrew ]; then
+        BREW_PREFIX="/opt/homebrew"
+    elif [ -d /usr/local/Homebrew ]; then
+        BREW_PREFIX="/usr/local"
+    else
+        BREW_PREFIX=""
+    fi
+
+    if [ -n "$BREW_PREFIX" ]; then
+        eval "$($BREW_PREFIX/bin/brew shellenv)"
+    fi
+}
+
+detect_brew
+
+# -------------------------------------------------------------------
+# Symlink helper
+# -------------------------------------------------------------------
+symlink() {
+    local src="$1" dst="$2" name
+    name="$(basename "$dst")"
+
+    if [ ! -e "$src" ]; then
+        warn "Source not found: $src"
         return 1
     fi
+
+    # Already correct
+    if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+        ok "$name (already linked)"
+        return 0
+    fi
+
+    # Backup existing file (not symlink)
+    if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+        mv "$dst" "${dst}.backup.$(date +%Y%m%d_%H%M%S)"
+        warn "Backed up existing $name"
+    fi
+
+    # Remove stale symlink
+    [ -L "$dst" ] && rm "$dst"
+
+    mkdir -p "$(dirname "$dst")"
+    ln -sf "$src" "$dst"
+    ok "$name -> $(basename "$(dirname "$src")")/$(basename "$src")"
 }
 
-# Main setup function
+# -------------------------------------------------------------------
+# 1. Install system dependencies
+# -------------------------------------------------------------------
+install_deps() {
+    section "System Dependencies"
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        if ! command_exists brew; then
+            if confirm "Homebrew not found. Install it?"; then
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                detect_brew
+            else
+                warn "Skipping Homebrew — some things won't install"
+                return
+            fi
+        fi
+
+        local packages=(gum tmux neovim node git fd lazygit ripgrep
+                        pyenv pyenv-virtualenv nvm
+                        zsh-autosuggestions zsh-syntax-highlighting powerlevel10k)
+
+        for pkg in "${packages[@]}"; do
+            if brew list "$pkg" &>/dev/null; then
+                ok "$pkg"
+            else
+                spin "Installing $pkg" brew install "$pkg" \
+                    && ok "$pkg" \
+                    || fail "Failed: $pkg"
+            fi
+        done
+
+        # Re-check gum availability after installing it
+        command -v gum &>/dev/null && HAS_GUM=true
+
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        spin "Updating apt" sudo apt update
+        spin "Installing packages" sudo apt install -y \
+            tmux neovim nodejs npm git curl fd-find ripgrep
+        ok "System packages"
+    fi
+}
+
+# -------------------------------------------------------------------
+# 2. Symlink configs
+# -------------------------------------------------------------------
+link_configs() {
+    section "Linking Configs"
+
+    # Shell
+    symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
+    symlink "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+
+    # Kitty
+    symlink "$DOTFILES_DIR/.config/kitty" "$HOME/.config/kitty"
+
+    # Tmux
+    symlink "$DOTFILES_DIR/.config/tmux" "$HOME/.config/tmux"
+
+    # Neovim (repo has .config/nvim/nvim — link the inner dir)
+    symlink "$DOTFILES_DIR/.config/nvim/nvim" "$HOME/.config/nvim"
+
+}
+
+# -------------------------------------------------------------------
+# 3. Plugins & tools
+# -------------------------------------------------------------------
+setup_plugins() {
+    section "Plugins & Tools"
+
+    # TPM (tmux plugin manager)
+    if [ -d "$HOME/.tmux/plugins/tpm" ]; then
+        ok "TPM"
+    else
+        spin "Installing TPM" git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" \
+            && ok "TPM" || fail "TPM failed"
+    fi
+
+    # zsh-z
+    if [ -d "$HOME/.zsh-z" ]; then
+        ok "zsh-z"
+    else
+        spin "Installing zsh-z" git clone https://github.com/agkozak/zsh-z "$HOME/.zsh-z" \
+            && ok "zsh-z" || fail "zsh-z failed"
+    fi
+
+    # NVM directory
+    mkdir -p "$HOME/.nvm"
+    ok "nvm directory"
+}
+
+# -------------------------------------------------------------------
+# 4. Containers (Colima on macOS, Docker on Linux)
+# -------------------------------------------------------------------
+setup_containers() {
+    section "Containers"
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS: Colima + Docker CLI
+        local colima_pkgs=(colima docker docker-compose docker-credential-helper)
+        for pkg in "${colima_pkgs[@]}"; do
+            if brew list "$pkg" &>/dev/null; then
+                ok "$pkg"
+            else
+                spin "Installing $pkg" brew install "$pkg" \
+                    && ok "$pkg" || fail "Failed: $pkg"
+            fi
+        done
+
+        # Start Colima if not running
+        if colima status &>/dev/null; then
+            ok "Colima (running)"
+        else
+            if confirm "Start Colima now? (Apple Virtualization + Rosetta)"; then
+                spin "Starting Colima" colima start --vm-type vz --vz-rosetta --cpu 4 --memory 8 \
+                    && ok "Colima started" || fail "Colima failed to start"
+            fi
+        fi
+
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command_exists docker; then
+            ok "Docker"
+        else
+            spin "Installing Docker" bash -c 'curl -fsSL https://get.docker.com | sh' \
+                && ok "Docker" || fail "Docker install failed"
+        fi
+    fi
+}
+
+# -------------------------------------------------------------------
+# 5. Local overrides
+# -------------------------------------------------------------------
+setup_local() {
+    section "Local Config"
+
+    if [ ! -f "$HOME/.zshrc.local" ]; then
+        cp "$DOTFILES_DIR/.zshrc.local.example" "$HOME/.zshrc.local" 2>/dev/null || \
+        cat > "$HOME/.zshrc.local" << 'EOF'
+# Machine-specific config — not tracked by git
+# Add API keys, local paths, etc. here
+
+# export ANTHROPIC_API_KEY=""
+# export PERPLEXITY_API_KEY=""
+# export OPENROUTER_API_KEY=""
+EOF
+        ok "Created ~/.zshrc.local"
+    else
+        ok "~/.zshrc.local (exists)"
+    fi
+
+    # Save DOTFILES_DIR
+    echo "export DOTFILES_DIR=\"$DOTFILES_DIR\"" > "$HOME/.dotfiles-env"
+    ok "DOTFILES_DIR=$DOTFILES_DIR"
+}
+
+# -------------------------------------------------------------------
+# Summary
+# -------------------------------------------------------------------
+show_summary() {
+    if $HAS_GUM; then
+        echo ""
+        gum style \
+            --foreground 10 --border-foreground 10 --border rounded \
+            --padding "1 2" --margin "1 0" \
+            "Setup complete!" \
+            "" \
+            "Next steps:" \
+            "  1. source ~/.zshrc" \
+            "  2. Edit ~/.zshrc.local with your API keys" \
+            "  3. Open nvim — plugins auto-install on first launch" \
+            "  4. In tmux: prefix + I to install TPM plugins"
+    else
+        echo ""
+        echo "========================================="
+        echo "  Setup complete!"
+        echo ""
+        echo "  Next steps:"
+        echo "    1. source ~/.zshrc"
+        echo "    2. Edit ~/.zshrc.local with your API keys"
+        echo "    3. Open nvim — plugins auto-install on first launch"
+        echo "    4. In tmux: prefix + I to install TPM plugins"
+        echo "========================================="
+    fi
+}
+
+# -------------------------------------------------------------------
+# Main
+# -------------------------------------------------------------------
 main() {
-    print_status "Starting AI Development Environment setup..."
-    
-    detect_platform
-    install_system_deps
-    install_ai_agents
-    setup_tmux
-    setup_shell
-    create_directories
-    setup_env
-    verify_installation
-    
-    print_success "Setup complete! 🎉"
-    echo ""
-    print_status "Next steps:"
-    echo "1. Reload your shell: source ~/.zshrc"
-    echo "2. Configure API keys in ~/.ai-env"
-    echo "3. Authenticate with AI agents:"
-    echo "   - claude login"
-    echo "   - cursor-agent login"
-    echo "4. Start your first AI session: dev-ai claude"
-    echo ""
-    print_status "For help, run: ai-agent help"
+    header "Dotfiles Setup"
+
+    install_deps
+    link_configs
+    setup_plugins
+    setup_containers
+    setup_local
+    show_summary
 }
 
-# Run main function
 main "$@"

@@ -1,2 +1,0 @@
-local plugins = {}
-return plugins

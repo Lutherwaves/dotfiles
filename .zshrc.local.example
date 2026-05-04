@@ -1,0 +1,11 @@
+# Machine-specific config — not tracked by git
+# Copy this to ~/.zshrc.local and fill in your values
+
+# Go private modules
+# export GOPRIVATE=github.com/your-org/*
+
+# SSH aliases (use kitten ssh for Kitty terminal support)
+# myserver() { kitten ssh -t 192.168.1.100 'tmux attach -t main'; }
+
+# Machine-specific paths
+# export PATH="/some/local/path:$PATH"
