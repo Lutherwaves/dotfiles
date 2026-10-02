@@ -195,6 +195,17 @@ link_configs() {
     # Tmux
     symlink "$DOTFILES_DIR/.config/tmux" "$HOME/.config/tmux"
 
+    # tmux server start/restore + per-minute save (systemd, Linux only)
+    if [[ "$OSTYPE" == "linux-gnu"* ]] && command -v systemctl &>/dev/null; then
+        mkdir -p "$HOME/.config/systemd/user"
+        for unit in tmux.service tmux-save.service tmux-save.timer; do
+            symlink "$DOTFILES_DIR/.config/systemd/user/$unit" "$HOME/.config/systemd/user/$unit"
+        done
+        systemctl --user daemon-reload
+        systemctl --user enable tmux.service tmux-save.timer &>/dev/null \
+            && ok "tmux systemd units enabled" || fail "tmux systemd units"
+    fi
+
     # Neovim (repo has .config/nvim/nvim — link the inner dir)
     symlink "$DOTFILES_DIR/.config/nvim/nvim" "$HOME/.config/nvim"
 

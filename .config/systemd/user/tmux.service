@@ -1,0 +1,20 @@
+[Unit]
+Description=tmux server, restored from the last tmux-resurrect snapshot
+Documentation=man:tmux(1)
+
+[Service]
+Type=forking
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/tmux start-server
+# `systemctl --user start tmux` returns only once this finishes, so nothing can create a
+# session ahead of the restore. `-`: no snapshot yet is not a failure.
+ExecStartPost=-%h/.tmux/plugins/tmux-resurrect/scripts/restore.sh
+# No save on stop: during a crash or OOM teardown it would capture a half-dead layout.
+# tmux-save.timer saved within the last minute.
+ExecStop=/usr/bin/tmux kill-server
+KillMode=control-group
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
