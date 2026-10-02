@@ -62,7 +62,7 @@ export PERPLEXITY_API_KEY="..."
 
 Open `nvim` — LazyVim plugins and LSPs install automatically on first launch.
 
-In tmux, press `Ctrl+Space` then `I` to install TPM plugins.
+In tmux, press `Ctrl+a` then `I` to install TPM plugins.
 
 ## Local LLM (Ollama)
 
