@@ -73,7 +73,9 @@ spin() {
     else
         echo "  $title..."
         "$@"
+        local rc=$?
         echo "  done"
+        return $rc
     fi
 }
 
