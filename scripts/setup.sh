@@ -66,11 +66,14 @@ spin() {
     local title="$1"
     shift
     if $HAS_GUM; then
-        gum spin --spinner dot --title "$title" -- "$@"
+        # --show-output: without it gum hides all stdout/stderr, so a slow
+        # step (big brew install, colima's first VM download) or a hidden
+        # prompt (sudo password, Rosetta license) looks identical to a hang.
+        gum spin --spinner dot --title "$title" --show-output -- "$@"
     else
-        echo -n "  $title... "
-        "$@" &>/dev/null
-        echo "done"
+        echo "  $title..."
+        "$@"
+        echo "  done"
     fi
 }
 
